@@ -21,6 +21,10 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch import nn
 import torch.nn.functional as F
 from torch.nn.modules.loss import _WeightedLoss
+from datetime import datetime
+import logging
+
+
 
 
 
@@ -65,7 +69,30 @@ def set_log(logfileName, rank=-1):
     return logger
 
 
-def save_ckpt(epoch, model, optimizer, scheduler, losses, model_name, ckpt_folder):
+def save_ckpt(epoch, model, optimizer, scheduler, epoch_loss, model_name, ckpt_folder, world_size):
+    """
+    save checkpoint
+    """
+    if not os.path.exists(ckpt_folder):
+        os.makedirs(ckpt_folder)
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    ckpt_filename = f"{timestamp}_GPU_{world_size}_{model_name}_{epoch}.pth"
+    ckpt_filepath = os.path.join(ckpt_folder, ckpt_filename)
+    torch.save(
+        {
+            'epoch': epoch,
+            'model_state_dict': model.module.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'scheduler_state_dict': scheduler.state_dict(),
+            'losses': epoch_loss,
+        },
+        ckpt_filepath
+    )
+    logging.info(f"Checkpoint saved to {ckpt_filepath}")
+
+
+
+def save_ckpt_legacy(epoch, model, optimizer, scheduler, losses, model_name, ckpt_folder):
     """
     save checkpoint
     """
