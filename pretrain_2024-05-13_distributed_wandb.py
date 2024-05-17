@@ -26,10 +26,11 @@ import anndata as ad
 from utils import *
 import warnings
 from datetime import datetime
-
+import wandb
 
 warnings.filterwarnings("ignore", category=UserWarning)  # 忽略 UserWarning 类型的警告 临时忽略异常
 
+wandb.login(key="fa1a9ae37df78a027fdc9c43a3892529b38fc4ce")
 
 # 参数解析
 parser = argparse.ArgumentParser()
@@ -290,6 +291,7 @@ def train_loop(model, train_loader, val_loader, optimizer, scheduler, loss_fn, s
         epoch_acc = get_reduced(epoch_acc, local_rank, 0, world_size)
         if is_master:
             logging.info(f'Epoch {epoch} completed. Training Loss: {epoch_loss:.6f}, Accuracy: {epoch_acc:.4f}%')
+            wandb.log({"accuracy": epoch_acc, "loss": epoch_loss})
         dist.barrier()
         scheduler.step()
         logging.info(f"Process {local_rank}, Epoch {epoch}: Scheduler stepped")
@@ -348,6 +350,18 @@ def main():
     # 返回值包括设备、世界大小、是否为主进程、模型名称、检查点目录、随机种子、批次大小、类别数、序列长度、是否使用位置嵌入、本地进程序号、训练轮数、学习率、填充标记 ID 和梯度累积步数
     device, world_size, is_master, model_name, ckpt_dir, SEED, BATCH_SIZE, CLASS, SEQ_LEN, POS_EMBED_USING, local_rank, EPOCHS, LEARNING_RATE, PAD_TOKEN_ID, GRADIENT_ACCUMULATION = initialize_settings(args)
 
+    # 准备上传参数
+    wandb.init(
+        project="scbert",
+
+        # track hyperparameters and run metadata
+        config={
+            "learning_rate": LEARNING_RATE,
+            "architecture": "BERT",
+            "dataset": args.data_path,
+            "epochs": EPOCHS,
+        }
+    )
     # 准备数据
     # 调用 prepare_data 函数，传入命令行参数 args、随机种子、批次大小、设备、世界大小和类别数
     # 返回值包括训练数据加载器和验证数据加载器
