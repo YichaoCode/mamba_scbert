@@ -110,6 +110,8 @@ novel_indices = []
 with torch.no_grad():
     for index in range(batch_size):
         full_seq = data[index]
+        # 扩充特征量到16906 与zheng68k一样
+        full_seq = np.pad(full_seq, (0, 13312), 'constant', constant_values=(0, 0))
         full_seq[full_seq > (CLASS - 2)] = CLASS - 2
         full_seq = torch.from_numpy(full_seq).long()
         full_seq = torch.cat((full_seq, torch.tensor([0]))).to(device)
