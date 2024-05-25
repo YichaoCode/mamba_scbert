@@ -133,8 +133,6 @@ with open('/work/09735/yichao/ls6/dev/scBERT/label_dict', 'wb') as fp:
     pkl.dump(label_dict, fp)
 with open('/work/09735/yichao/ls6/dev/scBERT/label', 'wb') as fp:
     pkl.dump(label, fp)
-print('gen file end')
-sys.exit(0)
 class_num = np.unique(label, return_counts=True)[1].tolist()
 class_weight = torch.tensor([(1 - (x / sum(class_num))) ** 2 for x in class_num])
 label = torch.from_numpy(label)
