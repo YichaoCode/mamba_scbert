@@ -109,7 +109,7 @@ pred_finals = []
 novel_indices = []
 with torch.no_grad():
     for index in range(batch_size):
-        full_seq = data[index].toarray()[0]
+        full_seq = data[index]
         full_seq[full_seq > (CLASS - 2)] = CLASS - 2
         full_seq = torch.from_numpy(full_seq).long()
         full_seq = torch.cat((full_seq, torch.tensor([0]))).to(device)
