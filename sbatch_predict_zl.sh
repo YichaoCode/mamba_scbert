@@ -24,6 +24,6 @@ cd /work/09735/yichao/ls6/dev/scBERT
 MASTER_ADDR=$(hostname)
 
 # 执行PyTorch分布式训练命令
-srun bash -c "torchrun --nproc_per_node=1 --nnodes=1 --node_rank=\$SLURM_NODEID --master_addr=$MASTER_ADDR --master_port=29500 predict_zl.py --model_path "./ckpts/finetune_best.pth" --data_path='./data/adata_reduced_31_may.h5ad'"
+srun bash -c "torchrun --nproc_per_node=1 --nnodes=1 --node_rank=\$SLURM_NODEID --master_addr=$MASTER_ADDR --master_port=29500 predict_zl.py --model_path "./ckpts/finetune_best.pth" --data_path='./data/Zheng68K.h5ad'"
 
 
