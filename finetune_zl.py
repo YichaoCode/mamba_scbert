@@ -47,12 +47,14 @@ parser.add_argument("--model_path", type=str, default='./panglao_pretrained.pth'
 parser.add_argument("--ckpt_dir", type=str, default='./ckpts/finetune/', help='Directory of checkpoint to save.')
 parser.add_argument("--model_name", type=str, default='finetune', help='Finetuned model name.')
 
+logger = logging.getLogger()
 args = parser.parse_args()
 # rank = int(os.environ["RANK"])
 # local_rank = args.local_rank
 local_rank = args.local_rank if args.local_rank is not None else int(os.environ.get('LOCAL_RANK', 0))
 rank = int(os.environ.get("RANK", 0))
 is_master = local_rank == 0
+logger.info("Starting script with local_rank: {}, rank: {}, is_master: {}".format(local_rank, rank, is_master))
 
 SEED = args.seed
 EPOCHS = args.epoch
