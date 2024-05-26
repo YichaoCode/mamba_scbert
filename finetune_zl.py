@@ -48,7 +48,7 @@ parser.add_argument("--valid_every", type=int, default=1, help='Number of traini
 parser.add_argument("--pos_embed", type=bool, default=True, help='Using Gene2vec encoding or not.')
 parser.add_argument("--data_path", type=str, default='./data/Zheng68K.h5ad', help='Path of data for finetune.')
 parser.add_argument("--model_path", type=str, default='./panglao_pretrained.pth', help='Path of pretrained model.')
-parser.add_argument("--ckpt_dir", type=str, default='./ckpts/', help='Directory of checkpoint to save.')
+parser.add_argument("--ckpt_dir", type=str, default='./ckpts/finetune/', help='Directory of checkpoint to save.')
 parser.add_argument("--model_name", type=str, default='finetune', help='Finetuned model name.')
 
 logger = logging.getLogger()
@@ -233,7 +233,7 @@ for i in range(1, EPOCHS+1):
     epoch_loss = get_reduced(epoch_loss, local_rank, 0, world_size)
     epoch_acc = get_reduced(epoch_acc, local_rank, 0, world_size)
     if is_master:
-        print(f'    ==  Epoch: {i} | Training Loss: {epoch_loss:.6f} | Accuracy: {epoch_acc:6.4f}%  ==')
+        log(f'    ==  Epoch: {i} | Training Loss: {epoch_loss:.6f} | Accuracy: {epoch_acc:6.4f}%  ==')
     dist.barrier()
     scheduler.step()
 
@@ -268,9 +268,9 @@ for i in range(1, EPOCHS+1):
             val_loss = running_loss / index
             val_loss = get_reduced(val_loss, local_rank, 0, world_size)
             if is_master:
-                print(f'    ==  Epoch: {i} | Validation Loss: {val_loss:.6f} | F1 Score: {f1:.6f}  ==')
-                print(confusion_matrix(truths, predictions))
-                print(classification_report(truths, predictions, target_names=label_dict.tolist(), digits=4))
+                log(f'    ==  Epoch: {i} | Validation Loss: {val_loss:.6f} | F1 Score: {f1:.6f}  ==')
+                log(confusion_matrix(truths, predictions))
+                log(classification_report(truths, predictions, target_names=label_dict.tolist(), digits=4))
             if cur_acc > max_acc:
                 max_acc = cur_acc
                 trigger_times = 0
