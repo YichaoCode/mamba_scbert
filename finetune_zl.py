@@ -21,7 +21,6 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.distributed as dist
-import datetime
 
 from performer_pytorch import PerformerLM
 import scanpy as sc
@@ -29,6 +28,11 @@ import anndata as ad
 from utils import *
 import pickle as pkl
 import sys
+import datetime
+
+def log(strr):
+    temp_time = datetime.datetime.now()
+    print(f'{temp_time} -- {strr}')
 
 parser = argparse.ArgumentParser()
 # parser.add_argument("--local_rank", type=int, default=-1, help='Local process rank.')
@@ -44,7 +48,7 @@ parser.add_argument("--valid_every", type=int, default=1, help='Number of traini
 parser.add_argument("--pos_embed", type=bool, default=True, help='Using Gene2vec encoding or not.')
 parser.add_argument("--data_path", type=str, default='./data/Zheng68K.h5ad', help='Path of data for finetune.')
 parser.add_argument("--model_path", type=str, default='./panglao_pretrained.pth', help='Path of pretrained model.')
-parser.add_argument("--ckpt_dir", type=str, default='./ckpts/finetune/', help='Directory of checkpoint to save.')
+parser.add_argument("--ckpt_dir", type=str, default='./ckpts/', help='Directory of checkpoint to save.')
 parser.add_argument("--model_name", type=str, default='finetune', help='Finetuned model name.')
 
 logger = logging.getLogger()
@@ -80,9 +84,6 @@ world_size = torch.distributed.get_world_size()
 
 seed_all(SEED + torch.distributed.get_rank())
 
-def log(strr):
-    temp_time = datetime.datetime.now()
-    print(f'{temp_time} -- {strr}')
 
 class SCDataset(Dataset):
     def __init__(self, data, label):
@@ -199,7 +200,6 @@ loss_fn = nn.CrossEntropyLoss(weight=None).to(local_rank)
 dist.barrier()
 trigger_times = 0
 max_acc = 0.0
-log(f'======== begin finetune on rank: {rank}')
 for i in range(1, EPOCHS+1):
     train_loader.sampler.set_epoch(i)
     model.train()
@@ -233,7 +233,7 @@ for i in range(1, EPOCHS+1):
     epoch_loss = get_reduced(epoch_loss, local_rank, 0, world_size)
     epoch_acc = get_reduced(epoch_acc, local_rank, 0, world_size)
     if is_master:
-        log(f'    ==  Epoch: {i} | Training Loss: {epoch_loss:.6f} | Accuracy: {epoch_acc:6.4f}%  ==')
+        print(f'    ==  Epoch: {i} | Training Loss: {epoch_loss:.6f} | Accuracy: {epoch_acc:6.4f}%  ==')
     dist.barrier()
     scheduler.step()
 
@@ -268,14 +268,12 @@ for i in range(1, EPOCHS+1):
             val_loss = running_loss / index
             val_loss = get_reduced(val_loss, local_rank, 0, world_size)
             if is_master:
-                log(f'    ==  Epoch: {i} | Validation Loss: {val_loss:.6f} | F1 Score: {f1:.6f}  ==')
-                log(confusion_matrix(truths, predictions))
-                log(classification_report(truths, predictions, target_names=label_dict.tolist(), digits=4))
+                print(f'    ==  Epoch: {i} | Validation Loss: {val_loss:.6f} | F1 Score: {f1:.6f}  ==')
+                print(confusion_matrix(truths, predictions))
+                print(classification_report(truths, predictions, target_names=label_dict.tolist(), digits=4))
             if cur_acc > max_acc:
                 max_acc = cur_acc
                 trigger_times = 0
-                # TODO: 每次finetune保存前缀
-                log(f'========save finetune {i}')
                 save_best_ckpt(i, model, optimizer, scheduler, val_loss, model_name, ckpt_dir)
             else:
                 trigger_times += 1
