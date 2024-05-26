@@ -136,7 +136,7 @@ def save_best_ckpt(epoch, model, optimizer, scheduler, losses, model_name, ckpt_
             'scheduler_state_dict': scheduler.state_dict(),
             'losses': losses,
         },
-        f'{ckpt_folder}{model_name}_best.pth'
+        f'{ckpt_folder}{model_name}_{epoch}_best.pth'
     )
 
 def get_reduced(tensor, current_device, dest_device, world_size):

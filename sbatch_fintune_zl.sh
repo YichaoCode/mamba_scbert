@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=scbert_finetune
-#SBATCH --nodes=1 
-#SBATCH -p gpu-a100-dev 
-#SBATCH -t 02:00:00 
-#SBATCH --mail-user=yichao1liu@gmail.com
+#SBATCH --job-name=sc_finetune_prod
+#SBATCH --nodes=4
+#SBATCH -p gpu-a100 
+#SBATCH -t 24:00:00 
+#SBATCH --mail-user=daizhilian@hotmail.com
 #SBATCH --mail-type=begin
 #SBATCH --mail-type=fail
 #SBATCH --mail-type=end
@@ -24,6 +24,6 @@ cd /work/09735/yichao/ls6/dev/scBERT
 MASTER_ADDR=$(hostname)
 
 # 执行PyTorch分布式训练命令
-srun bash -c "torchrun --nproc_per_node=3 --nnodes=1 --node_rank=\$SLURM_NODEID --master_addr=$MASTER_ADDR --master_port=29500 predict_zl.py --model_path='./ckpts/finetune_best.pth' --data_path='./data/adata_reduced_31_may.h5ad'"
+srun bash -c "torchrun --nproc_per_node=3 --nnodes=4 --node_rank=\$SLURM_NODEID --master_addr=$MASTER_ADDR --master_port=29500 finetune_zl.py --model_path='./tx_pretrain.pth' --data_path='./data/Zheng68K.h5ad'"
 
 
