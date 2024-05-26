@@ -1,5 +1,5 @@
-torch==1.8.1
-torchvision==0.9.1
+torch==2.0.0
+torchvision==0.15.0
 transformers==4.6.1
 scanpy==1.7.2
 scikit-learn==0.24.2
