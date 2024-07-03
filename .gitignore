@@ -1,0 +1,9 @@
+data/
+ckpts/
+slurm_output/
+causal-conv1d/
+logs/
+ckpts.tar.gz
+ckpts2_batch6/
+mamba/
+errors/
