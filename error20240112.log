@@ -1,0 +1,19 @@
+nohup: ignoring input
+Traceback (most recent call last):
+  File "/home/yichao/dev_tools/miniconda3/envs/scbert/lib/python3.8/runpy.py", line 185, in _run_module_as_main
+    mod_name, mod_spec, code = _get_module_details(mod_name, _Error)
+  File "/home/yichao/dev_tools/miniconda3/envs/scbert/lib/python3.8/runpy.py", line 111, in _get_module_details
+    __import__(pkg_name)
+  File "/home/yichao/jerry19970311/scBERT/pretrain_mamba.py", line 28, in <module>
+    from mamba.mamba_ssm.modules.mamba_simple import Mamba
+  File "/home/yichao/jerry19970311/scBERT/mamba/mamba_ssm/__init__.py", line 4, in <module>
+    from mamba.mamba_ssm.modules.mamba_simple import Mamba
+  File "/home/yichao/jerry19970311/scBERT/mamba/mamba_ssm/modules/mamba_simple.py", line 13, in <module>
+    from mamba_ssm.ops.selective_scan_interface import selective_scan_fn, mamba_inner_fn
+  File "/home/yichao/dev_tools/miniconda3/envs/scbert/lib/python3.8/site-packages/mamba_ssm/__init__.py", line 5, in <module>
+    from mamba_ssm.models.mixer_seq_simple import MambaLMHeadModel
+  File "/home/yichao/dev_tools/miniconda3/envs/scbert/lib/python3.8/site-packages/mamba_ssm/models/mixer_seq_simple.py", line 15, in <module>
+    from mamba_ssm.utils.generation import GenerationMixin
+  File "/home/yichao/dev_tools/miniconda3/envs/scbert/lib/python3.8/site-packages/mamba_ssm/utils/generation.py", line 14, in <module>
+    from transformers.generation import GreedySearchDecoderOnlyOutput, SampleDecoderOnlyOutput, TextStreamer
+ModuleNotFoundError: No module named 'transformers.generation'
