@@ -21,6 +21,8 @@ import scanpy as sc
 import anndata as ad
 from utils import *
 import pickle as pkl
+from tqdm import tqdm
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--bin_num", type=int, default=5, help='Number of bins.')
@@ -60,27 +62,16 @@ class Identity(torch.nn.Module):
         self.fc3 = nn.Linear(in_features=h_dim, out_features=out_dim, bias=True)
 
     def forward(self, x):
-        print('=============================before forward')
         x = x[:,None,:,:]
-        print('=============================forward1')
         x = self.conv1(x)
-        print('=============================forward2')
         x = self.act(x)
-        print('=============================forward3')
         x = x.view(x.shape[0],-1)
-        print('=============================forward4')
         x = self.fc1(x)
-        print('=============================forward5')
         x = self.act1(x)
-        print('=============================forward6')
         x = self.dropout1(x)
-        print('=============================forward7')
         x = self.fc2(x)
-        print('=============================forward8')
         x = self.act2(x)
-        print('=============================forward9')
         x = self.dropout2(x)
-        print('=============================forward10')
         x = self.fc3(x)
         return x
 
@@ -119,21 +110,16 @@ model.eval()
 pred_finals = []
 novel_indices = []
 print('=============================RAEDY')
+# 开始计时
+start_time = time.time()
 with torch.no_grad():
-    for index in range(batch_size):
-        print('=============================range {}'.format(index))
-        full_seq = data[index]
-        print('============full_seq = data[index] {}'.format(full_seq.shape))
-        # 扩充特征量到16906 与zheng68k一样
-        full_seq = np.pad(full_seq, (0, 13312), 'constant', constant_values=(0, 0))
-        print('============expand {}'.format(full_seq.shape))
+    for index in tqdm(range(batch_size)):
+        full_seq = data[index].toarray()[0]
         full_seq[full_seq > (CLASS - 2)] = CLASS - 2
         full_seq = torch.from_numpy(full_seq).long()
         full_seq = torch.cat((full_seq, torch.tensor([0]))).to(device)
         full_seq = full_seq.unsqueeze(0)
-        print('=============================before model')
         pred_logits = model(full_seq)
-        print('=============================defore softmax')
         softmax = nn.Softmax(dim=-1)
         pred_prob = softmax(pred_logits)
         pred_final = pred_prob.argmax(dim=-1).item()
@@ -143,4 +129,11 @@ with torch.no_grad():
 pred_list = label_dict[pred_finals].tolist()
 for index in novel_indices:
     pred_list[index] = 'Unassigned'
-print(pred_list)
+# print(pred_list)
+# print(pred_list)
+print('DONE')
+# 结束计时
+end_time = time.time()
+
+# 打印运行时间
+print(f"运行时间：{end_time - start_time} 秒")

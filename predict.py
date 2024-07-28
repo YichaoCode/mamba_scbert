@@ -21,6 +21,7 @@ import scanpy as sc
 import anndata as ad
 from utils import *
 import pickle as pkl
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--bin_num", type=int, default=5, help='Number of bins.')
@@ -107,6 +108,9 @@ batch_size = data.shape[0]
 model.eval()
 pred_finals = []
 novel_indices = []
+
+# 开始计时
+start_time = time.time()
 with torch.no_grad():
     for index in range(batch_size):
         full_seq = data[index].toarray()[0]
@@ -124,4 +128,10 @@ with torch.no_grad():
 pred_list = label_dict[pred_finals].tolist()
 for index in novel_indices:
     pred_list[index] = 'Unassigned'
-print(pred_list)
+# print(pred_list)
+print('DONE')
+# 结束计时
+end_time = time.time()
+
+# 打印运行时间
+print(f"运行时间：{end_time - start_time} 秒")

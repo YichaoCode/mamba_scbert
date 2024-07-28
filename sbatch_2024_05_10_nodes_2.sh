@@ -3,7 +3,7 @@
 #SBATCH --nodes=2
 #SBATCH -p gpu-a100-dev
 #SBATCH --ntasks-per-node=3 # 可删
-#SBATCH -t 00:10:00 
+#SBATCH -t 00:30:00 
 #SBATCH --mail-user=yichao1liu@gmail.com
 #SBATCH --mail-type=begin
 #SBATCH --mail-type=fail
@@ -31,7 +31,7 @@ cmd="torchrun \
 --node_rank=\$SLURM_NODEID \
 --master_addr=$MASTER_ADDR \
 --master_port=29500 \
-pretrain_2024-05-09_structured.py \
+pretrain_2024-05-13_distributed.py \
 --data_path='./data/panglao_human.h5ad'"
 
 srun bash -c "$cmd"

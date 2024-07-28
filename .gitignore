@@ -1,3 +1,13 @@
 # 忽略根目录下所有文件夹
-/*/
+# /*/
 panglao_pretrain.pth
+
+
+# 明确忽略 ckpts 和 data 文件夹（实际上这可能是多余的，因为 /*/ 已经忽略了所有文件夹）
+/ckpts/
+/data/
+/slurmlogs/
+/wandb/
+/loss/
+/sbatch_result/
+
