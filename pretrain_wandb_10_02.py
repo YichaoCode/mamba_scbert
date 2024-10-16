@@ -35,6 +35,57 @@ import time
 import psutil
 import torch.cuda as cuda
 
+class DistributedTrainingUtils:
+    @staticmethod
+    def print_dist_init_confirmation(local_rank):
+        if dist.is_initialized():
+            logging.info(f"Distributed training initialized. World size: {dist.get_world_size()}, "
+                         f"Rank: {dist.get_rank()}, Local Rank: {local_rank}, "
+                         f"Master: {os.environ['MASTER_ADDR']}:{os.environ['MASTER_PORT']}")
+        else:
+            logging.error("Failed to initialize distributed training.")
+
+    @staticmethod
+    def record_distributed_operation(operation, *args, **kwargs):
+        start_time = torch.cuda.Event(enable_timing=True)
+        end_time = torch.cuda.Event(enable_timing=True)
+
+        start_time.record()
+        try:
+            result = operation(*args, **kwargs)
+            end_time.record()
+            torch.cuda.synchronize()
+            elapsed_time = start_time.elapsed_time(end_time)
+            logging.info(f"{operation.__name__} completed in {elapsed_time:.2f}ms")
+            return result
+        except Exception as e:
+            logging.error(f"Error during {operation.__name__}: {e}")
+            raise
+
+    @staticmethod
+    def compare_model_parameters(model):
+        if not dist.is_initialized() or dist.get_world_size() == 1:
+            return
+
+        local_params = torch.cat([p.data.view(-1) for p in model.parameters()])
+
+        if dist.get_rank() == 0:
+            global_params = [torch.zeros_like(local_params) for _ in range(dist.get_world_size())]
+            DistributedTrainingUtils.record_distributed_operation(dist.gather, tensor=local_params, gather_list=global_params, dst=0)
+
+            is_consistent = True
+            for i, params in enumerate(global_params):
+                if not torch.equal(global_params[0], params):
+                    logging.warning(f"参数不一致: 节点0与节点{i}")
+                    is_consistent = False
+
+            if is_consistent:
+                logging.info("所有节点的模型参数一致。")
+            else:
+                logging.error("警告：检测到节点间模型参数不一致。")
+        else:
+            DistributedTrainingUtils.record_distributed_operation(dist.gather, tensor=local_params, dst=0)
+
 # 参数配置类
 class Config:
     def __init__(self):
@@ -114,7 +165,7 @@ class Trainer:
         self.device = device
         self.world_size = world_size
         self.local_rank = local_rank
-        self.is_master = is_master  # 将is_master参数保存为类变量
+        self.is_master = is_master
         self.GRADIENT_ACCUMULATION = args.grad_acc
         self.MASK_PROB = args.mask_prob
         self.REPLACE_PROB = args.replace_prob
@@ -181,7 +232,7 @@ class Trainer:
 
     def train(self):
         dist.barrier()
-        hostname = socket.gethostname()  # 获取主机名
+        hostname = socket.gethostname()
         for i in range(1, self.EPOCHS + 1):
             epoch_start_time = time.time()
             self.train_loader.sampler.set_epoch(i)
@@ -205,6 +256,10 @@ class Trainer:
                     grad_norm = clip_grad_norm_(self.model.parameters(), int(1e2))
                     self.optimizer.step()
                     self.optimizer.zero_grad()
+                    
+                    # 添加参数一致性检查
+                    DistributedTrainingUtils.compare_model_parameters(self.model)
+                
                 running_loss += loss.item()
                 final = self.SOFTMAX(logits)[..., 1:-1]
                 final = final.argmax(dim=-1) + 1
@@ -213,7 +268,7 @@ class Trainer:
                 cum_acc += torch.true_divide(correct_num, pred_num).mean().item()
                 logging.info(f'Process {self.local_rank}, Epoch {i}, Step {index}, Loss: {loss.item():.6f}')
                 
-                if self.is_master and index % self.GRADIENT_ACCUMULATION == 0:  # 仅在主进程记录
+                if self.is_master and index % self.GRADIENT_ACCUMULATION == 0:
                     current_lr = self.optimizer.param_groups[0]['lr']
                     perplexity = self.calculate_perplexity(loss)
                     param_norm = self.get_parameter_norm()
@@ -224,11 +279,11 @@ class Trainer:
                         "gradient_norm": grad_norm,
                         "parameter_norm": param_norm,
                         "perplexity": perplexity.item(),
-                        "gpu_memory_allocated": cuda.memory_allocated(device=self.device) / 1e9,  # Convert to GB
-                        "gpu_memory_cached": cuda.memory_reserved(device=self.device) / 1e9,  # Convert to GB
+                        "gpu_memory_allocated": cuda.memory_allocated(device=self.device) / 1e9,
+                        "gpu_memory_cached": cuda.memory_reserved(device=self.device) / 1e9,
                         "cpu_usage": psutil.cpu_percent(),
                         "ram_usage": psutil.virtual_memory().percent,
-                        "hostname": hostname  # 记录主机名
+                        "hostname": hostname
                     })
             epoch_loss = running_loss / index
             epoch_acc = 100 * cum_acc / index
@@ -243,10 +298,14 @@ class Trainer:
                     "epoch_train_loss": epoch_loss,
                     "epoch_train_accuracy": epoch_acc,
                     "epoch_time": epoch_time,
-                    "hostname": hostname  # 记录主机名
+                    "hostname": hostname
                 })
             dist.barrier()
             self.scheduler.step()
+            
+            # 在每个 epoch 结束时添加参数一致性检查
+            DistributedTrainingUtils.compare_model_parameters(self.model)
+            
             if i % self.VALIDATE_EVERY == 0:
                 self.validate(i)
             if self.is_master:
@@ -260,7 +319,7 @@ class Trainer:
         predictions = []
         truths = []
         running_perplexity = 0.0
-        hostname = socket.gethostname()  # 验证时也获取主机名
+        hostname = socket.gethostname()
         with torch.no_grad():
             for index, data in enumerate(self.val_loader):
                 index += 1
@@ -288,7 +347,7 @@ class Trainer:
                 "epoch": epoch,
                 "val_loss": val_loss,
                 "val_accuracy": val_acc,
-                "hostname": hostname  # 记录主机名
+                "hostname": hostname
             })
             # Log best and worst samples
             best_sample_idx = ((truths != self.PAD_TOKEN_ID) * (predictions == truths)).sum(dim=-1).argmax()
@@ -296,7 +355,7 @@ class Trainer:
             wandb.log({
                 "best_sample": wandb.Table(data=[[truths[best_sample_idx].cpu().numpy(), predictions[best_sample_idx].cpu().numpy()]], columns=["Truth", "Prediction"]),
                 "worst_sample": wandb.Table(data=[[truths[worst_sample_idx].cpu().numpy(), predictions[worst_sample_idx].cpu().numpy()]], columns=["Truth", "Prediction"]),
-                "hostname": hostname  # 记录主机名
+                "hostname": hostname
             })
         del predictions, truths
 
@@ -305,16 +364,16 @@ class Trainer:
 
 # 主函数
 def main():
-    hostname = socket.gethostname()  # 获取主机名
+    hostname = socket.gethostname()
     logging.basicConfig(level=logging.INFO, format=f'%(asctime)s - [Process %(process)d] - %(levelname)s - {hostname} - %(message)s')
     config = Config()
     args = config.args
     local_rank = args.local_rank if args.local_rank is not None else int(os.environ.get('LOCAL_RANK', 0))
-    rank = int(os.environ.get("RANK", 0))  # 获取全局 rank
+    rank = int(os.environ.get("RANK", 0))
     print(f"local_rank:{local_rank}")
-    is_master = rank == 0  # 判断是否为主进程
+    is_master = rank == 0
 
-    if is_master:  # 仅在主进程初始化 wandb
+    if is_master:
         wandb.init(project="scbert-pretraining", config=args)  
         script_path = os.path.abspath(__file__)
         wandb.save(script_path)
@@ -326,6 +385,10 @@ def main():
     device = torch.device("cuda", local_rank)
     world_size = torch.distributed.get_world_size()
     seed_all(SEED + torch.distributed.get_rank())
+    
+    # 添加分布式训练初始化确认
+    DistributedTrainingUtils.print_dist_init_confirmation(local_rank)
+    
     data_module = DataModule(args, device, world_size)
     data_module.setup()
     model = PerformerLM(
@@ -358,12 +421,11 @@ def main():
         device=device,
         world_size=world_size,
         local_rank=local_rank,
-        is_master=is_master  # 传递主进程标志
+        is_master=is_master
     )
     trainer.train()
     if is_master:
         wandb.finish()
-
 
 if __name__ == "__main__":
     main()
