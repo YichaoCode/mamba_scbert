@@ -25,7 +25,7 @@ import scanpy as sc
 import anndata as ad
 from utils import *
 import wandb
-
+import socket  # 用于获取主机名
 from collections import Counter
 from thop import profile
 
@@ -45,7 +45,6 @@ class Config:
         parser.add_argument("--epoch", type=int, default=100, help='Number of epochs.')
         parser.add_argument("--seed", type=int, default=2021, help='Random seed.')
         parser.add_argument("--batch_size", type=int, default=1, help='Number of batch size.')
-        # parser.add_argument("--batch_size", type=int, default=3, help='Number of batch size.')
         parser.add_argument("--learning_rate", type=float, default=1e-4, help='Learning rate.')
         parser.add_argument("--grad_acc", type=int, default=60, help='Number of gradient accumulation.')
         parser.add_argument("--valid_every", type=int, default=1, help='Number of training epochs between twice validation.')
@@ -104,7 +103,7 @@ class SCDataset(Dataset):
 
 # 训练器类
 class Trainer:
-    def __init__(self, model, optimizer, scheduler, loss_fn, train_loader, val_loader, args, device, world_size, local_rank):
+    def __init__(self, model, optimizer, scheduler, loss_fn, train_loader, val_loader, args, device, world_size, local_rank, is_master):
         self.model = model
         self.optimizer = optimizer
         self.scheduler = scheduler
@@ -115,7 +114,7 @@ class Trainer:
         self.device = device
         self.world_size = world_size
         self.local_rank = local_rank
-        self.is_master = local_rank == 0
+        self.is_master = is_master  # 将is_master参数保存为类变量
         self.GRADIENT_ACCUMULATION = args.grad_acc
         self.MASK_PROB = args.mask_prob
         self.REPLACE_PROB = args.replace_prob
@@ -182,6 +181,7 @@ class Trainer:
 
     def train(self):
         dist.barrier()
+        hostname = socket.gethostname()  # 获取主机名
         for i in range(1, self.EPOCHS + 1):
             epoch_start_time = time.time()
             self.train_loader.sampler.set_epoch(i)
@@ -212,11 +212,11 @@ class Trainer:
                 correct_num = ((labels != self.PAD_TOKEN_ID) * (final == labels)).sum(dim=-1)
                 cum_acc += torch.true_divide(correct_num, pred_num).mean().item()
                 logging.info(f'Process {self.local_rank}, Epoch {i}, Step {index}, Loss: {loss.item():.6f}')
-                if self.is_master and index % self.GRADIENT_ACCUMULATION == 0:
+                
+                if self.is_master and index % self.GRADIENT_ACCUMULATION == 0:  # 仅在主进程记录
                     current_lr = self.optimizer.param_groups[0]['lr']
                     perplexity = self.calculate_perplexity(loss)
                     param_norm = self.get_parameter_norm()
-                    # Log additional metrics
                     wandb.log({
                         "train_loss": loss.item(),
                         "train_accuracy": torch.true_divide(correct_num, pred_num).mean().item(),
@@ -227,7 +227,8 @@ class Trainer:
                         "gpu_memory_allocated": cuda.memory_allocated(device=self.device) / 1e9,  # Convert to GB
                         "gpu_memory_cached": cuda.memory_reserved(device=self.device) / 1e9,  # Convert to GB
                         "cpu_usage": psutil.cpu_percent(),
-                        "ram_usage": psutil.virtual_memory().percent
+                        "ram_usage": psutil.virtual_memory().percent,
+                        "hostname": hostname  # 记录主机名
                     })
             epoch_loss = running_loss / index
             epoch_acc = 100 * cum_acc / index
@@ -241,7 +242,8 @@ class Trainer:
                     "epoch": i,
                     "epoch_train_loss": epoch_loss,
                     "epoch_train_accuracy": epoch_acc,
-                    "epoch_time": epoch_time
+                    "epoch_time": epoch_time,
+                    "hostname": hostname  # 记录主机名
                 })
             dist.barrier()
             self.scheduler.step()
@@ -258,6 +260,7 @@ class Trainer:
         predictions = []
         truths = []
         running_perplexity = 0.0
+        hostname = socket.gethostname()  # 验证时也获取主机名
         with torch.no_grad():
             for index, data in enumerate(self.val_loader):
                 index += 1
@@ -284,14 +287,16 @@ class Trainer:
             wandb.log({
                 "epoch": epoch,
                 "val_loss": val_loss,
-                "val_accuracy": val_acc
+                "val_accuracy": val_acc,
+                "hostname": hostname  # 记录主机名
             })
             # Log best and worst samples
             best_sample_idx = ((truths != self.PAD_TOKEN_ID) * (predictions == truths)).sum(dim=-1).argmax()
             worst_sample_idx = ((truths != self.PAD_TOKEN_ID) * (predictions == truths)).sum(dim=-1).argmin()
             wandb.log({
                 "best_sample": wandb.Table(data=[[truths[best_sample_idx].cpu().numpy(), predictions[best_sample_idx].cpu().numpy()]], columns=["Truth", "Prediction"]),
-                "worst_sample": wandb.Table(data=[[truths[worst_sample_idx].cpu().numpy(), predictions[worst_sample_idx].cpu().numpy()]], columns=["Truth", "Prediction"])
+                "worst_sample": wandb.Table(data=[[truths[worst_sample_idx].cpu().numpy(), predictions[worst_sample_idx].cpu().numpy()]], columns=["Truth", "Prediction"]),
+                "hostname": hostname  # 记录主机名
             })
         del predictions, truths
 
@@ -300,18 +305,20 @@ class Trainer:
 
 # 主函数
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - [Process %(process)d] - %(levelname)s - %(message)s')
+    hostname = socket.gethostname()  # 获取主机名
+    logging.basicConfig(level=logging.INFO, format=f'%(asctime)s - [Process %(process)d] - %(levelname)s - {hostname} - %(message)s')
     config = Config()
     args = config.args
     local_rank = args.local_rank if args.local_rank is not None else int(os.environ.get('LOCAL_RANK', 0))
-    rank = int(os.environ.get("RANK", 0))
+    rank = int(os.environ.get("RANK", 0))  # 获取全局 rank
     print(f"local_rank:{local_rank}")
-    is_master = rank == 0
-    if is_master:
-        wandb.init(project="scbert-pretraining", config=args)
-        # Save the current script to Wandb
+    is_master = rank == 0  # 判断是否为主进程
+
+    if is_master:  # 仅在主进程初始化 wandb
+        wandb.init(project="scbert-pretraining", config=args)  
         script_path = os.path.abspath(__file__)
         wandb.save(script_path)
+
     SEED = args.seed
     dist.init_process_group(backend='nccl')
     torch.cuda.set_device(local_rank)
@@ -350,11 +357,13 @@ def main():
         args=args,
         device=device,
         world_size=world_size,
-        local_rank=local_rank
+        local_rank=local_rank,
+        is_master=is_master  # 传递主进程标志
     )
     trainer.train()
     if is_master:
         wandb.finish()
+
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,323 @@
+[33mcommit ef228e5c79660d7dc60854fb8513ce0f59a43e8e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32myichao_dev[m[33m, [m[1;31morigin/yichao_dev[m[33m)[m
+Author: Yichao <yichao1liu@gmail.com>
+Date:   Sun Jul 28 08:56:10 2024 -0500
+
+    delete requirements.txt
+
+[33mcommit 928cc79974d923b42cc8003806eab954b5d82930[m
+Author: Yichao <yichao1liu@gmail.com>
+Date:   Sun Jul 28 08:11:33 2024 -0500
+
+    clearml run scripts test
+
+[33mcommit 104cf4811beea9a0f8dfbca6acf04d247964da26[m
+Author: Yichao <yichao1liu@gmail.com>
+Date:   Sun Jul 28 07:54:44 2024 -0500
+
+    Organize the folder
+
+[33mcommit 307caad96f14580ea2c9cf848d6d0b4b6c5cff1f[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sun May 26 22:40:43 2024 +0800
+
+    use 4
+
+[33mcommit f3a0f1e3ddac4d36e1e04fb5d78fe02ce30f42e9[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sun May 26 22:34:37 2024 +0800
+
+    update
+
+[33mcommit 85b62ddb595f8882a8a2837b28836266ccd3c891[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sun May 26 22:30:57 2024 +0800
+
+    update
+
+[33mcommit 35a396e104d59e7a45a5342153ada78d68d12921[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sun May 26 22:27:46 2024 +0800
+
+    update
+
+[33mcommit 21f6d4e896a5e4ff70f005d236736d355010e903[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sun May 26 22:25:18 2024 +0800
+
+    update
+
+[33mcommit 99cbde6394c15038e8c44b530caef9098f451835[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sun May 26 22:24:44 2024 +0800
+
+    temp1
+
+[33mcommit 2d12f8679aadf5f8953bdf7eab4ce14db92673aa[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sun May 26 22:17:02 2024 +0800
+
+    try raw
+
+[33mcommit 72c8c74645613f25d159ab300f85d931fff56c78[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sun May 26 22:16:42 2024 +0800
+
+    use 4
+
+[33mcommit f2909dafacab65b7fca9231e552ea1b5484fcde6[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sun May 26 22:11:21 2024 +0800
+
+    add raw
+
+[33mcommit cabe7682bcb67d6c88dde3f11709e96df940a548[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sun May 26 22:04:30 2024 +0800
+
+    use 1
+
+[33mcommit 2f07849330e14b712fae16f181f2429798514c39[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sun May 26 19:55:35 2024 +0800
+
+    try more finetune
+
+[33mcommit a7fa79f596c3f8bba48464cee2c6cbf26f36d7d0[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sun May 26 19:03:55 2024 +0800
+
+    log
+
+[33mcommit 70654625478ed44b1eb7367f342abbaf34bbb381[m[33m ([m[1;32mdebug_zl[m[33m)[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sat May 25 22:33:58 2024 +0800
+
+    adjust ndarray size
+
+[33mcommit 49bd9a6a0d3ed40fadd60755bee835484de1fcc0[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sat May 25 22:09:01 2024 +0800
+
+    adjust numpy
+
+[33mcommit 7069785b41f2b5591f0f8826e63f699e5dfbeeeb[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sat May 25 19:54:52 2024 +0800
+
+    use zheng predict
+
+[33mcommit f926468bddec17de5262fe113c7106b883946ae3[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sat May 25 19:46:59 2024 +0800
+
+    use finetune
+
+[33mcommit 98c4ec23579e97e749f8cd570064f0c58952cbe5[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sat May 25 17:17:45 2024 +0800
+
+    custom model path
+
+[33mcommit 2d993d086c154c65d5dfd4a2e7122ed3b5f919ef[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sat May 25 17:13:31 2024 +0800
+
+    change epoch
+
+[33mcommit 13196d2e3650ee147f6f55aaf5bc66b4e4edd844[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sat May 25 16:58:33 2024 +0800
+
+    refactor: change model
+
+[33mcommit 821f6215ee250520d098ea57fbc8ef38bdf4dbbd[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sat May 25 16:33:37 2024 +0800
+
+    refactor: change data
+
+[33mcommit 358dea957d31ac2436c616786c207b075a00f98e[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sat May 25 16:24:45 2024 +0800
+
+    refactor: adjust model & nproc
+
+[33mcommit c338bcdb30386e7094faf297415b41b5c4266607[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sat May 25 16:19:30 2024 +0800
+
+    refactor: gen 1
+
+[33mcommit ba67036bfb1b986ee962c2e1c615ba3bfb7bfb45[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sat May 25 16:14:56 2024 +0800
+
+    refactor: gen file
+
+[33mcommit a351774b809f51c0ab32dbeb38a4e2c5648ecf15[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sat May 25 15:57:45 2024 +0800
+
+    feat: try feat
+
+[33mcommit b02bb6276f9c5c01bc94b0e717146a3e7e3e8a3b[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Thu May 23 17:21:07 2024 +0800
+
+    feat: modify finetune
+
+[33mcommit b1ccbe01b56877234c4e000aa4f1f2d686947be1[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Thu May 23 10:39:08 2024 +0800
+
+    feat: finetune sh
+
+[33mcommit 569eda8cbef44d9d13b1e32a69f574730b029079[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Sat May 18 10:52:21 2024 +0800
+
+    add try wandb
+
+[33mcommit d21d6f01f7bdc89f291e396e8d4030b40f797120[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Fri May 17 19:08:47 2024 +0800
+
+    feat: wandb sbatch
+
+[33mcommit de69381e39a0454c6b681960bfe9e7d8a348d4be[m
+Author: daizhilian <daizhilian@gf.com.cn>
+Date:   Fri May 17 19:08:25 2024 +0800
+
+    add wandb
+
+[33mcommit d3ffb92397d2cecec96e13fa2dad4f3314f761a4[m
+Author: Yichao Liu <yichao@login2.ls6.tacc.utexas.edu>
+Date:   Fri May 17 05:26:23 2024 -0500
+
+    init
+
+[33mcommit 262fd4b91f3f1c21a6e595d03d4ef423e16ffc99[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Wed Dec 13 16:42:32 2023 +0800
+
+    Update license.
+
+[33mcommit 0ea7f81c19767a6d4ca3907177371bafabf2d486[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Wed Dec 13 16:26:07 2023 +0800
+
+    Add a script for corssorgan experiment with LR for comparison.
+
+[33mcommit 161fe33b0cae1e5bd0a0ef76ae658b18f2f050f6[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Wed Dec 13 16:25:25 2023 +0800
+
+    Release pretrain codes and model interpretability codes.
+
+[33mcommit 61fa3dc74df0e925de3b62601d7898e43f9de5e2[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Wed Dec 6 15:23:54 2023 +0800
+
+    fix bug in predict.py
+
+[33mcommit c766b3b6c9e54bc9c8bcf0ee8e2e4f85586da083[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Wed Dec 6 14:53:51 2023 +0800
+
+    fix running command
+
+[33mcommit 8ac7c1e510ba44a64055f6393ef50d4cd569a2af[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Mon Oct 10 15:36:49 2022 +0800
+
+    Change the cell type information store and load manner.
+
+[33mcommit 55e1b46aa614d0f382541d204c7f5e4ec1927169[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Mon Oct 10 11:33:52 2022 +0800
+
+    fix bug in predict
+
+[33mcommit a6998d3eaadb0cddab6efd777d5138f644c5754d[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Fri Sep 30 14:31:58 2022 +0800
+
+    fix bugs
+
+[33mcommit 3ce9c7b4561de393f6b3b3a6bfb013580889e175[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Fri Sep 30 10:26:30 2022 +0800
+
+    Add tutorial in the readme
+
+[33mcommit dc08902d9bcb077c1ed859f45d27a81d0fee6451[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Mon Sep 26 23:17:19 2022 +0800
+
+    update citation
+
+[33mcommit 11fb0ab92014176d64b39d578c5f5cf694861433[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Mon Sep 26 22:03:21 2022 +0800
+
+    update
+
+[33mcommit 8abc9be87e46ec203d35ab16bcac1bd0edc640f6[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Mon Aug 1 11:23:00 2022 +0800
+
+    update readme
+
+[33mcommit bf897b86e259f1d4c960de54780f1d1265a36ac2[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Mon Aug 1 11:21:35 2022 +0800
+
+    update readme
+
+[33mcommit 9edb02c532215dbc2f61040df3313402f98b050f[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Thu Jun 23 21:00:06 2022 +0800
+
+    Fix bug in validation
+
+[33mcommit 1e384a378ab08a6e6e63af3b9fbbbd8853b6aacf[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Mon Jun 6 20:09:37 2022 +0800
+
+    update readme
+
+[33mcommit be43114be73e8cf639ba3b0fef26db97166292f7[m[33m ([m[1;33mtag: [m[1;33mv1.0.0[m[33m)[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Mon May 23 16:17:46 2022 +0800
+
+    add guidance for selection of the hyperparameters
+
+[33mcommit 11f07f2101e8c9b6c8115d09209f1c866c9b2cc4[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Sat Mar 5 21:11:30 2022 +0800
+
+    update data link
+
+[33mcommit bff382edfb98cb724fbdc9f55983687f1f7c5443[m
+Author: TENCENT\fionafyang <fionafyang@tencent.com>
+Date:   Fri Feb 18 16:46:33 2022 +0800
+
+    Update readme
+
+[33mcommit f2f3aa32c2ab6b154475835adb64a763cd51451c[m
+Author: fionafyang <fionafyang@tencent.com>
+Date:   Mon Jan 17 20:32:19 2022 +0800
+
+    fix typo
+
+[33mcommit 33d5ef2b6efd2b0dc30cf04b4a7ade185828e925[m
+Author: fionafyang <fionafyang@tencent.com>
+Date:   Mon Jan 17 16:48:52 2022 +0800
+
+    update readme add ckpt and data download link
+
+[33mcommit ba757fe7aabed37f32a9468270c461b2d892c728[m
+Author: fionafyang <fionafyang@tencent.com>
+Date:   Mon Jan 17 15:50:39 2022 +0800
+
+    first commit
