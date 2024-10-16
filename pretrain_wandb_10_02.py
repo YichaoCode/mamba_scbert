@@ -25,15 +25,17 @@ import scanpy as sc
 import anndata as ad
 from utils import *
 import wandb
-import socket  # 用于获取主机名
+import socket
 from collections import Counter
 from thop import profile
-
-# Add these imports at the top of your script
 from torch.nn.utils import clip_grad_norm_
 import time
 import psutil
 import torch.cuda as cuda
+
+# Add Mamba imports
+from mamba_ssm import MambaLMHeadModel
+from mamba_ssm.models.config_mamba import MambaConfig
 
 class DistributedTrainingUtils:
     @staticmethod
@@ -76,17 +78,16 @@ class DistributedTrainingUtils:
             is_consistent = True
             for i, params in enumerate(global_params):
                 if not torch.equal(global_params[0], params):
-                    logging.warning(f"参数不一致: 节点0与节点{i}")
+                    logging.warning(f"Parameters inconsistent: Node 0 vs Node {i}")
                     is_consistent = False
 
             if is_consistent:
-                logging.info("所有节点的模型参数一致。")
+                logging.info("All nodes have consistent model parameters.")
             else:
-                logging.error("警告：检测到节点间模型参数不一致。")
+                logging.error("Warning: Inconsistent model parameters detected between nodes.")
         else:
             DistributedTrainingUtils.record_distributed_operation(dist.gather, tensor=local_params, dst=0)
 
-# 参数配置类
 class Config:
     def __init__(self):
         parser = argparse.ArgumentParser()
@@ -105,9 +106,9 @@ class Config:
         parser.add_argument("--data_path", type=str, default='./data/panglao_human.h5ad', help='Path of data for pretraining.')
         parser.add_argument("--ckpt_dir", type=str, default='./ckpts/', help='Directory of checkpoint to save.')
         parser.add_argument("--model_name", type=str, default='panglao_pretrain', help='Pretrained model name.')
+        parser.add_argument("--model_type", type=str, default="performer", choices=["performer", "mamba"], help='Type of model to use')
         self.args = parser.parse_args()
 
-# 数据处理类
 class DataModule:
     def __init__(self, args, device, world_size):
         self.args = args
@@ -133,7 +134,6 @@ class DataModule:
         self.train_loader = DataLoader(self.train_dataset, batch_size=self.BATCH_SIZE, sampler=self.train_sampler)
         self.val_loader = DataLoader(self.val_dataset, batch_size=self.BATCH_SIZE, sampler=self.val_sampler)
 
-# 数据集类
 class SCDataset(Dataset):
     def __init__(self, data, CLASS, device):
         super().__init__()
@@ -152,7 +152,6 @@ class SCDataset(Dataset):
     def __len__(self):
         return self.data.shape[0]
 
-# 训练器类
 class Trainer:
     def __init__(self, model, optimizer, scheduler, loss_fn, train_loader, val_loader, args, device, world_size, local_rank, is_master):
         self.model = model
@@ -246,18 +245,23 @@ class Trainer:
                 data, labels = self.data_mask(data)
                 if index % self.GRADIENT_ACCUMULATION != 0:
                     with self.model.no_sync():
-                        logits = self.model(data)
+                        if self.args.model_type == "performer":
+                            logits = self.model(data)
+                        elif self.args.model_type == "mamba":
+                            logits = self.model(data).logits
                         loss = self.loss_fn(logits.transpose(1, 2), labels) / self.GRADIENT_ACCUMULATION
                         loss.backward()
                 if index % self.GRADIENT_ACCUMULATION == 0:
-                    logits = self.model(data)
+                    if self.args.model_type == "performer":
+                        logits = self.model(data)
+                    elif self.args.model_type == "mamba":
+                        logits = self.model(data).logits
                     loss = self.loss_fn(logits.transpose(1, 2), labels) / self.GRADIENT_ACCUMULATION
                     loss.backward()
                     grad_norm = clip_grad_norm_(self.model.parameters(), int(1e2))
                     self.optimizer.step()
                     self.optimizer.zero_grad()
                     
-                    # 添加参数一致性检查
                     DistributedTrainingUtils.compare_model_parameters(self.model)
                 
                 running_loss += loss.item()
@@ -303,7 +307,6 @@ class Trainer:
             dist.barrier()
             self.scheduler.step()
             
-            # 在每个 epoch 结束时添加参数一致性检查
             DistributedTrainingUtils.compare_model_parameters(self.model)
             
             if i % self.VALIDATE_EVERY == 0:
@@ -325,7 +328,10 @@ class Trainer:
                 index += 1
                 data = data.to(self.device)
                 data, labels = self.data_mask(data)
-                logits = self.model(data)
+                if self.args.model_type == "performer":
+                    logits = self.model(data)
+                elif self.args.model_type == "mamba":
+                    logits = self.model(data).logits
                 loss = self.loss_fn(logits.transpose(1, 2), labels)
                 running_loss += loss.item()
                 running_perplexity += self.calculate_perplexity(loss).item()
@@ -349,7 +355,6 @@ class Trainer:
                 "val_accuracy": val_acc,
                 "hostname": hostname
             })
-            # Log best and worst samples
             best_sample_idx = ((truths != self.PAD_TOKEN_ID) * (predictions == truths)).sum(dim=-1).argmax()
             worst_sample_idx = ((truths != self.PAD_TOKEN_ID) * (predictions == truths)).sum(dim=-1).argmin()
             wandb.log({
@@ -362,7 +367,29 @@ class Trainer:
     def save_checkpoint(self, epoch):
         save_ckpt(epoch, self.model, self.optimizer, self.scheduler, None, self.model_name, self.ckpt_dir)
 
-# 主函数
+def create_model(args, device):
+    if args.model_type == "performer":
+        model = PerformerLM(
+            num_tokens=args.bin_num + 2,
+            dim=200,
+            depth=6,
+            max_seq_len=args.gene_num + 1,
+            heads=10,
+            local_attn_heads=0,
+            g2v_position_emb=args.pos_embed
+        )
+    elif args.model_type == "mamba":
+        config = MambaConfig()
+        config.d_model = 16
+        config.n_layer = 4
+        config.vocab_size = args.gene_num + 2
+        config.residual_in_fp32 = False
+        model = MambaLMHeadModel(config)
+    else:
+        raise ValueError(f"Unknown model type: {args.model_type}")
+    
+    return model.to(device)
+
 def main():
     hostname = socket.gethostname()
     logging.basicConfig(level=logging.INFO, format=f'%(asctime)s - [Process %(process)d] - %(levelname)s - {hostname} - %(message)s')
@@ -381,28 +408,24 @@ def main():
     SEED = args.seed
     dist.init_process_group(backend='nccl')
     torch.cuda.set_device(local_rank)
-    print(f"Local rank------------------------------------------------------------------------: {local_rank}")
+    print(f"Local rank: {local_rank}")
     device = torch.device("cuda", local_rank)
     world_size = torch.distributed.get_world_size()
     seed_all(SEED + torch.distributed.get_rank())
     
-    # 添加分布式训练初始化确认
     DistributedTrainingUtils.print_dist_init_confirmation(local_rank)
     
     data_module = DataModule(args, device, world_size)
     data_module.setup()
-    model = PerformerLM(
-        num_tokens=args.bin_num + 2,
-        dim=200,
-        depth=6,
-        max_seq_len=args.gene_num + 1,
-        heads=10,
-        local_attn_heads=0,
-        g2v_position_emb=args.pos_embed
-    )
-    model.to(device)
+    
+    model = create_model(args, device)
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
-    optimizer = Adam(model.parameters(), lr=args.learning_rate)
+    
+    if args.model_type == "performer":
+        optimizer = Adam(model.parameters(), lr=args.learning_rate)
+    elif args.model_type == "mamba":
+        optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, betas=(0.9, 0.95), weight_decay=0.1)
+    
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
         optimizer,
         T_0=15,
