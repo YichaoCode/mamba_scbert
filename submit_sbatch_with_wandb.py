@@ -2,6 +2,13 @@ import os
 import subprocess
 import logging
 
+
+# 切换到指定的工作目录
+os.chdir("/work/09735/yichao/ls6/dev/scBERT")
+print("Current working directory:", os.getcwd())
+
+
+
 # 配置日志记录
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
