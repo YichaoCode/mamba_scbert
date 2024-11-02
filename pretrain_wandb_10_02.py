@@ -2,6 +2,10 @@
 
 import logging
 import os
+
+os.environ["WANDB_DISABLE_SERVICE"] = "true"
+
+
 import gc
 import argparse
 import json
@@ -392,47 +396,63 @@ def create_model(args, device):
 
 def main():
     hostname = socket.gethostname()
-    logging.basicConfig(level=logging.INFO, format=f'%(asctime)s - [Process %(process)d] - %(levelname)s - {hostname} - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO,
+        format=f'%(asctime)s - [Process %(process)d] - %(levelname)s - {hostname} - %(message)s'
+    )
     config = Config()
     args = config.args
-    local_rank = args.local_rank if args.local_rank is not None else int(os.environ.get('LOCAL_RANK', 0))
-    rank = int(os.environ.get("RANK", 0))
-    print(f"local_rank:{local_rank}")
+
+    # Initialize the distributed process group
+    dist.init_process_group(backend='nccl')
+
+    # Get local_rank and rank
+    local_rank = int(os.environ.get('LOCAL_RANK', 0))
+    rank = dist.get_rank()
+    world_size = dist.get_world_size()
     is_master = rank == 0
 
+    # Set device
+    torch.cuda.set_device(local_rank)
+    device = torch.device("cuda", local_rank)
+
+    # Seed all processes
+    seed_all(args.seed + rank)
+
+    # Initialize WandB only in the master process
     if is_master:
-        wandb.init(project="scbert-pretraining", config=args)  
+        wandb.init(project="scbert-pretraining", config=args)
         script_path = os.path.abspath(__file__)
         wandb.save(script_path)
 
-    SEED = args.seed
-    dist.init_process_group(backend='nccl')
-    torch.cuda.set_device(local_rank)
-    print(f"Local rank: {local_rank}")
-    device = torch.device("cuda", local_rank)
-    world_size = torch.distributed.get_world_size()
-    seed_all(SEED + torch.distributed.get_rank())
-    
+    # Print distributed initialization confirmation
     DistributedTrainingUtils.print_dist_init_confirmation(local_rank)
-    
+
+    # Set up data module
     data_module = DataModule(args, device, world_size)
     data_module.setup()
-    
+
+    # Create model and wrap with DDP
     model = create_model(args, device)
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
-    
+
+    # Set up optimizer and scheduler
     if args.model_type == "performer":
         optimizer = Adam(model.parameters(), lr=args.learning_rate)
     elif args.model_type == "mamba":
         optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, betas=(0.9, 0.95), weight_decay=0.1)
-    
+
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
         optimizer,
         T_0=15,
         T_mult=2,
         eta_min=1e-6
     )
-    loss_fn = nn.CrossEntropyLoss(ignore_index=args.bin_num + 1, reduction='mean').to(local_rank)
+
+    # Define loss function
+    loss_fn = nn.CrossEntropyLoss(ignore_index=args.bin_num + 1, reduction='mean').to(device)
+
+    # Initialize trainer
     trainer = Trainer(
         model=model,
         optimizer=optimizer,
@@ -446,7 +466,11 @@ def main():
         local_rank=local_rank,
         is_master=is_master
     )
+
+    # Start training
     trainer.train()
+
+    # Finish WandB run in master process
     if is_master:
         wandb.finish()
 
