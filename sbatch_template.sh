@@ -14,7 +14,9 @@
 source /work/09735/yichao/ls6/miniconda/etc/profile.d/conda.sh
 
 # Activate your Conda environment
-conda activate scbert
+# conda activate scbert
+conda activate scbert6
+
 
 # Change to the specified working directory
 cd /work/09735/yichao/ls6/dev/scBERT

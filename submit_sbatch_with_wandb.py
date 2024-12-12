@@ -63,7 +63,7 @@ logger = logging.getLogger(__name__)
 # 复制您希望使用的组合并取消注释
 params = {
     "job_name": "scbert_default",
-    "nodes": 1,
+    "nodes": 2,
     "partition": "gpu-a100-dev",
     "time_limit": "02:00:00",
     "mail_user": "yichao1liu@gmail.com",
@@ -71,8 +71,8 @@ params = {
     "output_log": "./slurmlogs/%x_%j_nodes_%N.out",
     "error_log": "./slurmlogs/%x_%j_nodes_%N.err",
     "data_path": "./data/panglao_human.h5ad",
-    "model_type": "performer",
-    "nnodes": 1,
+    "model_type": "mamba",
+    "nnodes": 2,
 }
 
 def generate_slurm_script(params):
