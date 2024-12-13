@@ -1,0 +1,55 @@
+===== Help Information for MambaConfig =====
+Help on class MambaConfig in module mamba_ssm.models.config_mamba:
+
+class MambaConfig(builtins.object)
+ |  MambaConfig(d_model: int = 2560, d_intermediate: int = 0, n_layer: int = 64, vocab_size: int = 50277, ssm_cfg: dict = <factory>, attn_layer_idx: list = <factory>, attn_cfg: dict = <factory>, rms_norm: bool = True, residual_in_fp32: bool = True, fused_add_norm: bool = True, pad_vocab_size_multiple: int = 8, tie_embeddings: bool = True) -> None
+ |  
+ |  MambaConfig(d_model: int = 2560, d_intermediate: int = 0, n_layer: int = 64, vocab_size: int = 50277, ssm_cfg: dict = <factory>, attn_layer_idx: list = <factory>, attn_cfg: dict = <factory>, rms_norm: bool = True, residual_in_fp32: bool = True, fused_add_norm: bool = True, pad_vocab_size_multiple: int = 8, tie_embeddings: bool = True)
+ |  
+ |  Methods defined here:
+ |  
+ |  __eq__(self, other)
+ |  
+ |  __init__(self, d_model: int = 2560, d_intermediate: int = 0, n_layer: int = 64, vocab_size: int = 50277, ssm_cfg: dict = <factory>, attn_layer_idx: list = <factory>, attn_cfg: dict = <factory>, rms_norm: bool = True, residual_in_fp32: bool = True, fused_add_norm: bool = True, pad_vocab_size_multiple: int = 8, tie_embeddings: bool = True) -> None
+ |  
+ |  __repr__(self)
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data descriptors defined here:
+ |  
+ |  __dict__
+ |      dictionary for instance variables (if defined)
+ |  
+ |  __weakref__
+ |      list of weak references to the object (if defined)
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data and other attributes defined here:
+ |  
+ |  __annotations__ = {'attn_cfg': <class 'dict'>, 'attn_layer_idx': <clas...
+ |  
+ |  __dataclass_fields__ = {'attn_cfg': Field(name='attn_cfg',type=<class ...
+ |  
+ |  __dataclass_params__ = _DataclassParams(init=True,repr=True,eq=True,or...
+ |  
+ |  __hash__ = None
+ |  
+ |  d_intermediate = 0
+ |  
+ |  d_model = 2560
+ |  
+ |  fused_add_norm = True
+ |  
+ |  n_layer = 64
+ |  
+ |  pad_vocab_size_multiple = 8
+ |  
+ |  residual_in_fp32 = True
+ |  
+ |  rms_norm = True
+ |  
+ |  tie_embeddings = True
+ |  
+ |  vocab_size = 50277
+
+============================================
